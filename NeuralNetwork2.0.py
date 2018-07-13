@@ -1,5 +1,6 @@
 import numpy
 import random
+from Activation_fct import *
 """
     Classe servant à crée des Neural Networks
     Elle sera au début hardcoder en grande partie
@@ -9,17 +10,14 @@ import random
 class NeuralNetwork:
 
     #Constructeur
-    def __init__(self):
-        nb_input = 2
-        nb_hidden_nodes = [16,2] #Hidden layer correspond au array length
-        nb_output = 1
-
+    def __init__(self,nb_input,nb_hidden_nodes,nb_output,activation_fct,learning_rate):
+        self.activation_fct = activation_fct
+        self.learning_rate = learning_rate
         nb_nodes = [nb_input] + nb_hidden_nodes
         nb_nodes.append(nb_output)
 
         #Création des matrix pour weights and biases
         self.list_matrix_w,self.list_matrix_b = self.cree_matrix(nb_nodes)
-        self.learning_rate = 0.1
 
     #Fait un guess
     def guess(self,features):
@@ -31,7 +29,7 @@ class NeuralNetwork:
         for i in range(0,len(self.list_matrix_w)):
             weighted_sum = numpy.dot(self.list_matrix_w[i],self.calculated_sum[i])
             weighted_sum = numpy.add(weighted_sum,self.list_matrix_b[i])
-            weighted_sum = self.sigmoid(weighted_sum)
+            weighted_sum = self.activation_fct[i](weighted_sum)
             self.calculated_sum.append(weighted_sum)
 
         return self.calculated_sum[len(self.calculated_sum) - 1]
@@ -56,7 +54,7 @@ class NeuralNetwork:
             error_array.append(erreur)
 
             #Calcul du gradient
-            gradient = numpy.asmatrix(self.dsigmoid(numpy.asarray(self.calculated_sum[i + 1])))
+            gradient = numpy.asmatrix(self.activation_fct[i](numpy.asarray(self.calculated_sum[i + 1]),True))
             gradient = numpy.multiply(gradient,erreur)
             gradient = numpy.multiply(gradient,self.learning_rate)
 
@@ -72,13 +70,6 @@ class NeuralNetwork:
             self.list_matrix_w[i] = numpy.add(self.list_matrix_w[i],delta_weights)
             self.list_matrix_b[i] = numpy.add(self.list_matrix_b[i],gradient)
 
-    def sigmoid(self,x):
-        return 1 / (1 + numpy.exp(-x))
-
-    #Pas vraiment le derivative de sigmoid puisque les outputs sont déjà sigmoid
-    def dsigmoid(self,x):
-        return x * (1 - x)
-
     #Prend les nodes en parmamètres et crée des matrix appropriés
     def cree_matrix(self,node_list):
 
@@ -90,7 +81,7 @@ class NeuralNetwork:
             tableau_bias.append(numpy.asmatrix(numpy.random.uniform(-1,1,(node_list[i + 1],1))))
         return (tableau_matrix,tableau_bias)
 
-nn = NeuralNetwork()
+nn = NeuralNetwork(2,[16,2],1,[sigmoid,sigmoid,softmax],0.1)
 
 total_features = [
     [
@@ -119,17 +110,14 @@ total_features = [
 
 
 
-
 for i in range(0,17000):
     element = random.choice(total_features)
     nn.train(element[0],element[1])
-
 
 
 print(nn.guess([[0],[1]])) ##1
 print(nn.guess([[1],[0]])) ## 1
 print(nn.guess([[0],[0]])) ## 0
 print(nn.guess([[1],[1]])) ## 0
-
 
 
